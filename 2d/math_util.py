@@ -46,8 +46,7 @@ class Image:
 @njit(cache=True)
 def connect_points(p1, p2):
     if p1[0] == p2[0]:
-        # return np.array([[p1[0], y] for y in range(min(p1[1], p2[1]), max(p1[1], p2[1]) + 1)], dtype=np.int32)
-        result = np.empty((abs(p2[1] - p1[1] + 1), 2), dtype=np.int32)
+        result = np.empty((abs(p2[1] - p1[1]) + 1, 2), dtype=np.int32)
         for i, y in enumerate(range(min(p1[1], p2[1]), max(p1[1], p2[1]) + 1)):
             result[i] = [p1[0], y]
         return result
