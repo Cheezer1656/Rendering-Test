@@ -62,12 +62,16 @@ def draw_triangle(grid, triangle):
     l3a = connect_points(v2[:2], v0[:2])
     l3b = connect_points(v2[0::2], v0[0::2])
 
-    for i in range(l1a.shape[0]):
-        grid[l1a[i][0], l1a[i][1], l1b[l1a[i][1]-l1a[0][1]-1][1]] = triangle.color
-    for i in range(l2a.shape[0]):
-        grid[l2a[i][0], l2a[i][1], l2b[i][1]] = triangle.color
-    for i in range(l3a.shape[0]):
-        grid[l3a[i][0], l3a[i][1], l3b[i][1]] = triangle.color
+    apoints = np.concatenate([l1a, l2a, l3a])
+    bpoints = np.concatenate([l1b, l2b, l3b])
+    for i in range(min(apoints[:, 0]), max(apoints[:, 0]) + 1):
+        if i >= 0 and i < grid.shape[0]:
+            ys = np.sort(apoints[apoints[:, 0] == i][:, 1])
+            zs = np.sort(bpoints[bpoints[:, 0] == i][:, 1])
+            l4a = connect_points([i, ys[0]], [i, ys[-1]])
+            l4b = connect_points([ys[0], zs[0]], [ys[-1], zs[-1]])
+            for j in range(l4a.shape[0]):
+                grid[i, l4a[j][1], l4b[j][1]] = triangle.color
 
 def is_inside(v0, v1, v2, p):
     v0 = v0 - p
