@@ -1,18 +1,22 @@
+from colorsys import rgb_to_hsv, hsv_to_rgb
+
 import numpy as np
 from numba import njit
 
 
 class Triangle:
     def __init__(self, v0, v1, v2, color=[255, 0, 0]):
-        self.vertices = np.array([v0, v1, v2], dtype=np.float32)
+        self.vertices = np.array([v0, v1, v2], dtype=np.int32)
         self.vertices = self.vertices[np.lexsort((self.vertices[:, 1], self.vertices[:, 0]))]
         self.color = np.array(color, dtype=np.uint32)
 
 class Grid:
-    def __init__(self, width, height, depth):
+    def __init__(self, width, height, depth, light=[0, 0, 0], light_intensity=1.5):
         self.width = width
         self.height = height
         self.depth = depth
+        self.light = np.array(light, dtype=np.int32)
+        self.light_intensity = light_intensity
         self.triangles = []
     
     def add_triangle(self, triangle):
@@ -22,14 +26,16 @@ class Grid:
         result = np.zeros((self.height, self.width, self.depth, 3), dtype=np.uint32)
         for triangle in self.triangles:
             draw_triangle(result, triangle)
-        return rasterize(result)
+        return rasterize(result, self.light, self.light_intensity)
 
-def rasterize(grid):
+def rasterize(grid, light, intensity):
     result = np.zeros((grid.shape[0], grid.shape[1], 3), dtype=np.uint32)
-    for i in np.flip(np.argwhere(grid.any(axis=3)), axis=0):
-        color = grid[i[0], i[1], i[2]]
-        color[0] = max(0, color[0] - i[2]*50)
-        result[i[0], i[1]] = color
+    radius = np.linalg.norm(np.array(grid.shape[:2]) / 2)
+    points = np.flip(np.argwhere(grid.any(axis=3)), axis=0)
+    for p in points:
+        distance = np.linalg.norm(p - light) / intensity
+        hsv = rgb_to_hsv(*(grid[p[0], p[1], p[2]])/255)
+        result[p[0], p[1]] = (np.array(hsv_to_rgb(hsv[0], hsv[1], max(0, 1 - distance / radius)))*255)
     return result
 
 def connect_points(p1, p2):
